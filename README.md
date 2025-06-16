@@ -476,26 +476,6 @@ jobs:
 - **データベース設計者**: PostgreSQL設計・最適化
 - **DevOps エンジニア**: インフラ・デプロイメント
 
-### サポート
-- **技術サポート**: [support@company.com](mailto:support@company.com)
-- **バグレポート**: [GitHub Issues](https://github.com/your-username/master-data-maintenance/issues)
-- **機能要望**: [GitHub Discussions](https://github.com/your-username/master-data-maintenance/discussions)
-
-## 🔗 関連リンク
-
-- **本番環境**: [https://master-data.company.com](https://master-data.company.com)
-- **ステージング環境**: [https://staging-master-data.company.com](https://staging-master-data.company.com)
-- **API ドキュメント**: [https://api-docs.company.com](https://api-docs.company.com)
-- **監視ダッシュボード**: [https://monitoring.company.com](https://monitoring.company.com)
-
-## 📊 プロジェクト統計
-
-- **開発期間**: 6ヶ月
-- **コード行数**: 50,000+ 行
-- **テストカバレッジ**: 85%+
-- **パフォーマンス**: 99.9% 稼働率
-- **セキュリティ**: A+ 評価
-
 ---
 
 <div align="center">
