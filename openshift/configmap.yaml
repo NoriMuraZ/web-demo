@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: master-data-config
+  namespace: master-data-maintenance
+data:
+  NODE_ENV: "production"
+  PORT: "3000"
+  DB_HOST: "postgresql"
+  DB_PORT: "5432"
+  DB_NAME: "master_data"
+  REDIS_HOST: "redis"
+  REDIS_PORT: "6379"
+  CORS_ORIGIN: "https://master-data-frontend-master-data-maintenance.apps.sandbox-m2.ll9k.p1.openshiftapps.com"
+  LOG_LEVEL: "info"

@@ -1,0 +1,36 @@
+﻿apiVersion: build.openshift.io/v1
+kind: BuildConfig
+metadata:
+  name: master-data-api-build
+  labels:
+    app: master-data-api
+spec:
+  source:
+    type: Git
+    git:
+      uri: https://github.com/NoriMuraZ/web-demo.git
+      ref: main
+    contextDir: api
+  strategy:
+    type: Docker
+    dockerStrategy:
+      dockerfilePath: Dockerfile
+  output:
+    to:
+      kind: ImageStreamTag
+      name: master-data-api:latest
+  triggers:
+  - type: ConfigChange
+  - type: GitHub
+    github:
+      secret: github-webhook-secret
+---
+apiVersion: image.openshift.io/v1
+kind: ImageStream
+metadata:
+  name: master-data-api
+  labels:
+    app: master-data-api
+spec:
+  lookupPolicy:
+    local: false

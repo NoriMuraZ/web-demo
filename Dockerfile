@@ -1,0 +1,48 @@
+# Multi-stage build for React application
+FROM node:18-alpine as builder
+
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install all dependencies (including devDependencies for build)
+RUN npm ci
+
+# Copy source code
+COPY . .
+
+# Build the application
+RUN npm run build
+
+# Production stage
+FROM nginx:alpine
+
+# Remove existing nginx user and create new one with specific UID for OpenShift compatibility
+RUN deluser nginx && \
+    addgroup -g 1001 -S appgroup && \
+    adduser -S -D -H -u 1001 -h /var/cache/nginx -s /sbin/nologin -G appgroup appuser
+
+# Copy built assets from builder stage
+COPY --from=builder /app/dist /usr/share/nginx/html
+
+# Copy nginx configuration
+COPY nginx.conf /etc/nginx/nginx.conf
+
+# Set proper permissions for OpenShift
+RUN chown -R 1001:0 /usr/share/nginx/html && \
+    chmod -R g+rwX /usr/share/nginx/html && \
+    chown -R 1001:0 /var/cache/nginx && \
+    chown -R 1001:0 /var/log/nginx && \
+    chown -R 1001:0 /etc/nginx/conf.d && \
+    touch /var/run/nginx.pid && \
+    chown -R 1001:0 /var/run/nginx.pid
+
+# Switch to non-root user
+USER 1001
+
+# Expose port 8080 (OpenShift default)
+EXPOSE 8080
+
+# Start nginx
+CMD ["nginx", "-g", "daemon off;"]

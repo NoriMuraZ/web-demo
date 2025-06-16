@@ -1,0 +1,109 @@
+version: '3.8'
+
+services:
+  # データベース層 (PostgreSQL)
+  database:
+    image: postgres:15-alpine
+    container_name: master-data-db
+    environment:
+      POSTGRES_DB: master_data
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --locale=ja_JP.UTF-8"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init:/docker-entrypoint-initdb.d
+    ports:
+      - "5432:5432"
+    networks:
+      - master-data-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d master_data"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # アプリケーション層 (Node.js API)
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: master-data-api
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DB_HOST: database
+      DB_PORT: 5432
+      DB_NAME: master_data
+      DB_USER: admin
+      DB_PASSWORD: admin123
+      JWT_SECRET: your-jwt-secret-key
+      CORS_ORIGIN: http://localhost:8080
+    ports:
+      - "3000:3000"
+    depends_on:
+      database:
+        condition: service_healthy
+    networks:
+      - master-data-network
+    restart: unless-stopped
+    volumes:
+      - ./api/logs:/app/logs
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # プレゼンテーション層 (React Frontend)
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: master-data-frontend
+    environment:
+      VITE_API_URL: http://localhost:3000/api
+    ports:
+      - "8080:8080"
+    depends_on:
+      - api
+    networks:
+      - master-data-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Redis (セッション管理・キャッシュ)
+  redis:
+    image: redis:7-alpine
+    container_name: master-data-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - master-data-network
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  master-data-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

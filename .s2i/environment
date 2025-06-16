@@ -1,0 +1,2 @@
+# Source-to-Image environment variables
+NODE_ENV=production

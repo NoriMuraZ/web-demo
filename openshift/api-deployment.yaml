@@ -1,0 +1,85 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: master-data-api
+  namespace: master-data-maintenance
+  labels:
+    app: master-data-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: master-data-api
+  template:
+    metadata:
+      labels:
+        app: master-data-api
+    spec:
+      containers:
+      - name: master-data-api
+        image: master-data-api:latest
+        ports:
+        - containerPort: 3000
+        envFrom:
+        - configMapRef:
+            name: master-data-config
+        - secretRef:
+            name: master-data-secrets
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "200m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        volumeMounts:
+        - name: logs
+          mountPath: /app/logs
+      volumes:
+      - name: logs
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: master-data-api-service
+  namespace: master-data-maintenance
+  labels:
+    app: master-data-api
+spec:
+  selector:
+    app: master-data-api
+  ports:
+  - protocol: TCP
+    port: 3000
+    targetPort: 3000
+  type: ClusterIP
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: master-data-api-route
+  namespace: master-data-maintenance
+  labels:
+    app: master-data-api
+spec:
+  to:
+    kind: Service
+    name: master-data-api-service
+  port:
+    targetPort: 3000
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect

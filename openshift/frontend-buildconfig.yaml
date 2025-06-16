@@ -1,0 +1,37 @@
+apiVersion: build.openshift.io/v1
+kind: BuildConfig
+metadata:
+  name: master-data-frontend-build
+  namespace: master-data-maintenance
+  labels:
+    app: master-data-frontend
+spec:
+  source:
+    type: Git
+    git:
+      uri: https://github.com/your-username/master-data-maintenance.git
+      ref: main
+  strategy:
+    type: Docker
+    dockerStrategy:
+      dockerfilePath: Dockerfile.frontend
+  output:
+    to:
+      kind: ImageStreamTag
+      name: master-data-frontend:latest
+  triggers:
+  - type: ConfigChange
+  - type: GitHub
+    github:
+      secret: github-webhook-secret
+---
+apiVersion: image.openshift.io/v1
+kind: ImageStream
+metadata:
+  name: master-data-frontend
+  namespace: master-data-maintenance
+  labels:
+    app: master-data-frontend
+spec:
+  lookupPolicy:
+    local: false

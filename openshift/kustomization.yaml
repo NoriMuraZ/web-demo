@@ -1,0 +1,21 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+- namespace.yaml
+- configmap.yaml
+- secrets.yaml
+- postgres-init-configmap.yaml
+- redis-deployment.yaml
+- postgresql-deployment.yaml
+- api-buildconfig.yaml
+- frontend-buildconfig.yaml
+- api-deployment.yaml
+- frontend-deployment.yaml
+
+namespace: master-data-maintenance
+
+commonLabels:
+  app.kubernetes.io/name: master-data-maintenance
+  app.kubernetes.io/version: "1.0.0"
+  app.kubernetes.io/component: web-application

@@ -1,0 +1,35 @@
+﻿apiVersion: build.openshift.io/v1
+kind: BuildConfig
+metadata:
+  name: master-data-frontend-build
+  labels:
+    app: master-data-frontend
+spec:
+  source:
+    type: Git
+    git:
+      uri: https://github.com/NoriMuraZ/web-demo.git
+      ref: main
+  strategy:
+    type: Docker
+    dockerStrategy:
+      dockerfilePath: Dockerfile.frontend
+  output:
+    to:
+      kind: ImageStreamTag
+      name: master-data-frontend:latest
+  triggers:
+  - type: ConfigChange
+  - type: GitHub
+    github:
+      secret: github-webhook-secret
+---
+apiVersion: image.openshift.io/v1
+kind: ImageStream
+metadata:
+  name: master-data-frontend
+  labels:
+    app: master-data-frontend
+spec:
+  lookupPolicy:
+    local: false
