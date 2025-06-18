@@ -62,6 +62,31 @@ export interface User {
   updatedAt: string;
 }
 
+export interface Activity {
+  id: string;
+  type: 'create' | 'update' | 'delete' | 'login' | 'warning';
+  entityType: 'product' | 'customer' | 'category' | 'user' | 'role';
+  entityId: string;
+  entityName: string;
+  action: string;
+  description: string;
+  userId?: string;
+  userName?: string;
+  timestamp: string;
+  metadata?: Record<string, any>;
+}
+
+export interface Notification {
+  id: string;
+  type: 'success' | 'info' | 'warning' | 'error';
+  title: string;
+  message: string;
+  timestamp: string;
+  read: boolean;
+  autoHide?: boolean;
+  duration?: number;
+}
+
 export type EntityType = 'products' | 'customers' | 'categories' | 'users' | 'roles';
 
 export interface DashboardStats {

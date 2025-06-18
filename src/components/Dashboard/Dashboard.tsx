@@ -2,8 +2,11 @@ import React from 'react';
 import { Package, Users, Folder, TrendingUp, AlertCircle, Clock, UserCog, Shield } from 'lucide-react';
 import StatsCard from './StatsCard';
 import { mockProducts, mockCustomers, mockCategories, mockUsers, mockRoles } from '../../data/mockData';
+import { useApp } from '../../context/AppContext';
 
 const Dashboard: React.FC = () => {
+  const { getRecentActivities } = useApp();
+  
   const stats = {
     totalProducts: mockProducts.length,
     totalCustomers: mockCustomers.length,
@@ -17,15 +20,44 @@ const Dashboard: React.FC = () => {
     lowStock: mockProducts.filter(p => p.stock < 10).length,
   };
 
-  const recentActivity = [
-    { id: 1, action: '商品「スマートウォッチ」が更新されました', time: '2時間前', type: 'update' },
-    { id: 2, action: '新規顧客「田中太郎」が追加されました', time: '4時間前', type: 'create' },
-    { id: 3, action: 'ユーザー「佐藤次郎」がログインしました', time: '6時間前', type: 'login' },
-    { id: 4, action: 'ロール「オペレーター」の権限が変更されました', time: '8時間前', type: 'update' },
-    { id: 5, action: 'カテゴリ「電子機器」が変更されました', time: '1日前', type: 'update' },
-    { id: 6, action: '商品「オフィスチェア」が無効化されました', time: '2日前', type: 'delete' },
-    { id: 7, action: '在庫アラート：ノートパソコンの在庫が少なくなっています', time: '3日前', type: 'warning' },
-  ];
+  const recentActivities = getRecentActivities(7);
+
+  const getActivityIcon = (type: string) => {
+    switch (type) {
+      case 'create': return '🆕';
+      case 'update': return '✏️';
+      case 'delete': return '🗑️';
+      case 'login': return '🔐';
+      case 'warning': return '⚠️';
+      default: return '📝';
+    }
+  };
+
+  const getActivityColor = (type: string) => {
+    switch (type) {
+      case 'create': return 'bg-green-500';
+      case 'update': return 'bg-blue-500';
+      case 'delete': return 'bg-red-500';
+      case 'login': return 'bg-purple-500';
+      case 'warning': return 'bg-yellow-500';
+      default: return 'bg-gray-500';
+    }
+  };
+
+  const formatActivityTime = (timestamp: string) => {
+    const now = new Date();
+    const time = new Date(timestamp);
+    const diffMs = now.getTime() - time.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffMins < 1) return 'たった今';
+    if (diffMins < 60) return `${diffMins}分前`;
+    if (diffHours < 24) return `${diffHours}時間前`;
+    if (diffDays < 7) return `${diffDays}日前`;
+    return time.toLocaleDateString('ja-JP');
+  };
 
   return (
     <div className="space-y-6">
@@ -142,26 +174,52 @@ const Dashboard: React.FC = () => {
 
         {/* 最近のアクティビティ */}
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-          <h3 className="text-lg font-bold text-slate-800 mb-4">最近のアクティビティ</h3>
-          <div className="space-y-4">
-            {recentActivity.map((activity) => (
-              <div key={activity.id} className="flex items-start space-x-3">
-                <div className={`w-2 h-2 rounded-full mt-2 ${
-                  activity.type === 'create' ? 'bg-green-500' :
-                  activity.type === 'update' ? 'bg-blue-500' : 
-                  activity.type === 'login' ? 'bg-purple-500' :
-                  activity.type === 'warning' ? 'bg-yellow-500' : 'bg-red-500'
-                }`} />
-                <div className="flex-1">
-                  <p className="text-slate-800 text-sm">{activity.action}</p>
-                  <p className="text-slate-500 text-xs flex items-center mt-1">
-                    <Clock size={12} className="mr-1" />
-                    {activity.time}
-                  </p>
-                </div>
-              </div>
-            ))}
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-bold text-slate-800">最近のアクティビティ</h3>
+            <span className="text-sm text-slate-500">
+              {recentActivities.length}件のアクティビティ
+            </span>
           </div>
+          
+          {recentActivities.length === 0 ? (
+            <div className="text-center py-8">
+              <Clock className="mx-auto text-slate-300 mb-3" size={48} />
+              <p className="text-slate-500">まだアクティビティがありません</p>
+              <p className="text-sm text-slate-400 mt-1">
+                データの作成・更新・削除を行うとここに表示されます
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4 max-h-96 overflow-y-auto">
+              {recentActivities.map((activity) => (
+                <div key={activity.id} className="flex items-start space-x-3 p-3 rounded-lg hover:bg-slate-50 transition-colors">
+                  <div className={`w-2 h-2 rounded-full mt-2 ${getActivityColor(activity.type)}`} />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center space-x-2 mb-1">
+                      <span className="text-lg">{getActivityIcon(activity.type)}</span>
+                      <span className="text-sm font-medium text-slate-800 truncate">
+                        {activity.action}
+                      </span>
+                    </div>
+                    <p className="text-sm text-slate-600 mb-1">
+                      {activity.description}
+                    </p>
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs text-slate-500 flex items-center">
+                        <Clock size={12} className="mr-1" />
+                        {formatActivityTime(activity.timestamp)}
+                      </p>
+                      {activity.userName && (
+                        <span className="text-xs text-slate-400">
+                          by {activity.userName}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

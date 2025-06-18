@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { AppProvider } from './context/AppContext';
 import Sidebar from './components/Layout/Sidebar';
 import Header from './components/Layout/Header';
 import Dashboard from './components/Dashboard/Dashboard';
@@ -7,8 +8,9 @@ import CustomersView from './components/Customers/CustomersView';
 import CategoriesView from './components/Categories/CategoriesView';
 import UsersView from './components/Users/UsersView';
 import RolesView from './components/Roles/RolesView';
+import NotificationCenter from './components/Notifications/NotificationCenter';
 
-function App() {
+function AppContent() {
   const [currentView, setCurrentView] = useState('dashboard');
 
   const getViewTitle = () => {
@@ -62,7 +64,17 @@ function App() {
           {renderCurrentView()}
         </main>
       </div>
+      
+      <NotificationCenter />
     </div>
+  );
+}
+
+function App() {
+  return (
+    <AppProvider>
+      <AppContent />
+    </AppProvider>
   );
 }
 

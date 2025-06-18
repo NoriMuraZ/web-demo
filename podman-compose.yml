@@ -13,6 +13,13 @@ services:
     volumes:
       - redis_data:/data
     command: redis-server --appendonly yes --requirepass redis123
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "redis123", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    environment:
+      - REDIS_PASSWORD=redis123
 
   # データベース層 (PostgreSQL)
   database:
@@ -23,6 +30,7 @@ services:
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: admin123
       POSTGRES_INITDB_ARGS: "--encoding=UTF-8"
+      PGDATA: /var/lib/postgresql/data/pgdata
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./supabase/migrations:/docker-entrypoint-initdb.d:Z
@@ -33,6 +41,12 @@ services:
     restart: unless-stopped
     depends_on:
       - redis
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d master_data"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   # アプリケーション層 (Node.js API)
   api:
@@ -57,13 +71,21 @@ services:
     ports:
       - "3000:3000"
     depends_on:
-      - database
-      - redis
+      database:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
       - master-data-network
     restart: unless-stopped
     volumes:
       - ./api/logs:/app/logs:Z
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
 
   # プレゼンテーション層 (React Frontend)
   frontend:
@@ -76,10 +98,17 @@ services:
     ports:
       - "8080:8080"
     depends_on:
-      - api
+      api:
+        condition: service_healthy
     networks:
       - master-data-network
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
 volumes:
   postgres_data:

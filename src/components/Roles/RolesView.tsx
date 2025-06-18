@@ -3,12 +3,14 @@ import DataTable from '../DataTable/DataTable';
 import RoleForm from '../Forms/RoleForm';
 import { Role } from '../../types';
 import { useLocalStorage } from '../../hooks/useLocalStorage';
+import { useApp } from '../../context/AppContext';
 import { mockRoles } from '../../data/mockData';
 
 const RolesView: React.FC = () => {
   const [roles, setRoles] = useLocalStorage<Role[]>('roles', mockRoles);
   const [showForm, setShowForm] = useState(false);
   const [editingRole, setEditingRole] = useState<Role | undefined>();
+  const { addActivity, addNotification } = useApp();
 
   const columns = [
     {
@@ -78,12 +80,33 @@ const RolesView: React.FC = () => {
 
   const handleDelete = (role: Role) => {
     if (role.name === 'admin') {
-      alert('管理者ロールは削除できません。');
+      addNotification(
+        'error',
+        '削除エラー',
+        '管理者ロールは削除できません'
+      );
       return;
     }
     
     if (confirm(`ロール「${role.displayName}」を削除してもよろしいですか？`)) {
       setRoles(prev => prev.filter(r => r.id !== role.id));
+      
+      // アクティビティ記録
+      addActivity(
+        'delete',
+        'role',
+        role.id,
+        role.displayName,
+        'ロール削除',
+        `ロール「${role.displayName}」が削除されました`
+      );
+      
+      // 通知表示
+      addNotification(
+        'success',
+        'ロール削除完了',
+        `ロール「${role.displayName}」を削除しました`
+      );
     }
   };
 
@@ -92,11 +115,27 @@ const RolesView: React.FC = () => {
     
     if (editingRole) {
       // 既存ロールの更新
+      const updatedRole = { ...editingRole, ...roleData, updatedAt: now };
       setRoles(prev => prev.map(r => 
-        r.id === editingRole.id 
-          ? { ...editingRole, ...roleData, updatedAt: now }
-          : r
+        r.id === editingRole.id ? updatedRole : r
       ));
+      
+      // アクティビティ記録
+      addActivity(
+        'update',
+        'role',
+        editingRole.id,
+        roleData.displayName,
+        'ロール更新',
+        `ロール「${roleData.displayName}」が更新されました`
+      );
+      
+      // 通知表示
+      addNotification(
+        'success',
+        'ロール更新完了',
+        `ロール「${roleData.displayName}」を更新しました`
+      );
     } else {
       // 新規ロールの作成
       const newRole: Role = {
@@ -106,6 +145,23 @@ const RolesView: React.FC = () => {
         updatedAt: now,
       };
       setRoles(prev => [...prev, newRole]);
+      
+      // アクティビティ記録
+      addActivity(
+        'create',
+        'role',
+        newRole.id,
+        roleData.displayName,
+        'ロール作成',
+        `新しいロール「${roleData.displayName}」が作成されました`
+      );
+      
+      // 通知表示
+      addNotification(
+        'success',
+        'ロール作成完了',
+        `新しいロール「${roleData.displayName}」を作成しました`
+      );
     }
     
     setShowForm(false);

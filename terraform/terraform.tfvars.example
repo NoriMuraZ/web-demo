@@ -1,0 +1,36 @@
+# Example Terraform variables file
+# Copy this file to terraform.tfvars and modify the values as needed
+
+# Environment configuration
+environment = "development"
+node_env    = "production"
+
+# Database configuration
+postgres_db             = "master_data"
+postgres_user           = "admin"
+postgres_password       = "your-secure-password-here"
+postgres_external_port  = 5432
+postgres_memory_limit   = "512m"
+postgres_cpu_limit      = "0.5"
+
+# Redis configuration
+redis_password       = "your-redis-password-here"
+redis_external_port  = 6379
+redis_memory_limit   = "128m"
+redis_cpu_limit      = "0.2"
+
+# API configuration
+api_image           = "localhost/master-data-api:latest"
+api_external_port   = 3000
+api_memory_limit    = "512m"
+api_cpu_limit       = "0.5"
+jwt_secret          = "your-jwt-secret-key-change-in-production"
+cors_origin         = "http://localhost:8080"
+log_level           = "info"
+
+# Frontend configuration
+frontend_image         = "localhost/master-data-frontend:latest"
+frontend_external_port = 8080
+frontend_memory_limit  = "256m"
+frontend_cpu_limit     = "0.3"
+api_url               = "http://localhost:3000/api"

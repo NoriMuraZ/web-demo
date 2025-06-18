@@ -3,12 +3,14 @@ import DataTable from '../DataTable/DataTable';
 import UserForm from '../Forms/UserForm';
 import { User } from '../../types';
 import { useLocalStorage } from '../../hooks/useLocalStorage';
+import { useApp } from '../../context/AppContext';
 import { mockUsers } from '../../data/mockData';
 
 const UsersView: React.FC = () => {
   const [users, setUsers] = useLocalStorage<User[]>('users', mockUsers);
   const [showForm, setShowForm] = useState(false);
   const [editingUser, setEditingUser] = useState<User | undefined>();
+  const { addActivity, addNotification } = useApp();
 
   const getRoleLabel = (role: string) => {
     switch (role) {
@@ -100,12 +102,33 @@ const UsersView: React.FC = () => {
 
   const handleDelete = (user: User) => {
     if (user.role === 'admin') {
-      alert('管理者ユーザーは削除できません。');
+      addNotification(
+        'error',
+        '削除エラー',
+        '管理者ユーザーは削除できません'
+      );
       return;
     }
     
     if (confirm(`ユーザー「${user.fullName}」を削除してもよろしいですか？`)) {
       setUsers(prev => prev.filter(u => u.id !== user.id));
+      
+      // アクティビティ記録
+      addActivity(
+        'delete',
+        'user',
+        user.id,
+        user.fullName,
+        'ユーザー削除',
+        `ユーザー「${user.fullName}」が削除されました`
+      );
+      
+      // 通知表示
+      addNotification(
+        'success',
+        'ユーザー削除完了',
+        `ユーザー「${user.fullName}」を削除しました`
+      );
     }
   };
 
@@ -114,11 +137,27 @@ const UsersView: React.FC = () => {
     
     if (editingUser) {
       // 既存ユーザーの更新
+      const updatedUser = { ...editingUser, ...userData, updatedAt: now };
       setUsers(prev => prev.map(u => 
-        u.id === editingUser.id 
-          ? { ...editingUser, ...userData, updatedAt: now }
-          : u
+        u.id === editingUser.id ? updatedUser : u
       ));
+      
+      // アクティビティ記録
+      addActivity(
+        'update',
+        'user',
+        editingUser.id,
+        userData.fullName,
+        'ユーザー更新',
+        `ユーザー「${userData.fullName}」が更新されました`
+      );
+      
+      // 通知表示
+      addNotification(
+        'success',
+        'ユーザー更新完了',
+        `ユーザー「${userData.fullName}」を更新しました`
+      );
     } else {
       // 新規ユーザーの作成
       const newUser: User = {
@@ -128,6 +167,23 @@ const UsersView: React.FC = () => {
         updatedAt: now,
       };
       setUsers(prev => [...prev, newUser]);
+      
+      // アクティビティ記録
+      addActivity(
+        'create',
+        'user',
+        newUser.id,
+        userData.fullName,
+        'ユーザー作成',
+        `新しいユーザー「${userData.fullName}」が作成されました`
+      );
+      
+      // 通知表示
+      addNotification(
+        'success',
+        'ユーザー作成完了',
+        `新しいユーザー「${userData.fullName}」を作成しました`
+      );
     }
     
     setShowForm(false);

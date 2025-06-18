@@ -2,10 +2,12 @@ import React, { useState } from 'react';
 import DataTable from '../DataTable/DataTable';
 import { Customer } from '../../types';
 import { useLocalStorage } from '../../hooks/useLocalStorage';
+import { useApp } from '../../context/AppContext';
 import { mockCustomers } from '../../data/mockData';
 
 const CustomersView: React.FC = () => {
-  const [customers] = useLocalStorage<Customer[]>('customers', mockCustomers);
+  const [customers, setCustomers] = useLocalStorage<Customer[]>('customers', mockCustomers);
+  const { addActivity, addNotification } = useApp();
 
   const columns = [
     {
@@ -49,15 +51,87 @@ const CustomersView: React.FC = () => {
   ];
 
   const handleAdd = () => {
-    console.log('顧客を追加');
+    // デモ用の新規顧客作成
+    const now = new Date().toISOString();
+    const newCustomer: Customer = {
+      id: Date.now().toString(),
+      name: 'サンプル顧客',
+      email: 'sample@example.com',
+      phone: '03-0000-0000',
+      company: 'サンプル会社',
+      status: 'active',
+      createdAt: now,
+      updatedAt: now,
+    };
+    
+    setCustomers(prev => [...prev, newCustomer]);
+    
+    // アクティビティ記録
+    addActivity(
+      'create',
+      'customer',
+      newCustomer.id,
+      newCustomer.name,
+      '顧客作成',
+      `新しい顧客「${newCustomer.name}」が作成されました`
+    );
+    
+    // 通知表示
+    addNotification(
+      'success',
+      '顧客作成完了',
+      `新しい顧客「${newCustomer.name}」を作成しました`
+    );
   };
 
   const handleEdit = (customer: Customer) => {
-    console.log('顧客を編集:', customer);
+    // デモ用の顧客更新
+    const now = new Date().toISOString();
+    const updatedCustomer = { ...customer, updatedAt: now };
+    
+    setCustomers(prev => prev.map(c => 
+      c.id === customer.id ? updatedCustomer : c
+    ));
+    
+    // アクティビティ記録
+    addActivity(
+      'update',
+      'customer',
+      customer.id,
+      customer.name,
+      '顧客更新',
+      `顧客「${customer.name}」が更新されました`
+    );
+    
+    // 通知表示
+    addNotification(
+      'success',
+      '顧客更新完了',
+      `顧客「${customer.name}」を更新しました`
+    );
   };
 
   const handleDelete = (customer: Customer) => {
-    console.log('顧客を削除:', customer);
+    if (confirm(`顧客「${customer.name}」を削除してもよろしいですか？`)) {
+      setCustomers(prev => prev.filter(c => c.id !== customer.id));
+      
+      // アクティビティ記録
+      addActivity(
+        'delete',
+        'customer',
+        customer.id,
+        customer.name,
+        '顧客削除',
+        `顧客「${customer.name}」が削除されました`
+      );
+      
+      // 通知表示
+      addNotification(
+        'success',
+        '顧客削除完了',
+        `顧客「${customer.name}」を削除しました`
+      );
+    }
   };
 
   return (
