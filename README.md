@@ -149,8 +149,8 @@
 
 ```bash
 # リポジトリのクローン
-git clone https://github.com/your-username/master-data-maintenance.git
-cd master-data-maintenance
+git clone https://github.com/NoriMuraZ/web-demo
+cd web-demo
 
 # 依存関係のインストール
 npm install
